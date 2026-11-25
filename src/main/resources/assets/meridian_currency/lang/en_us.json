@@ -1,0 +1,16 @@
+{
+  "itemGroup.meridian_currency.money": "Copper and Silver",
+  "item.meridian_currency.copper_cash": "Copper Cash",
+  "item.meridian_currency.copper_cash.description": "A square-holed copper coin worth one wen.",
+  "item.meridian_currency.cash_string": "String of Cash",
+  "item.meridian_currency.cash_string.description": "A cord of copper cash worth a thousand wen.",
+  "item.meridian_currency.silver_fragment": "Silver Fragments",
+  "item.meridian_currency.silver_fragment.description": "Clippings of bright silver weighing one qian.",
+  "item.meridian_currency.silver_sycee": "Silver Sycee",
+  "item.meridian_currency.silver_sycee.description": "A cast ingot weighing one liang of silver.",
+  "currency.meridian_currency.copper.units": "%s wen",
+  "currency.meridian_currency.silver.units": "%s qian of silver",
+  "currency.meridian_currency.silver.major": "%s liang of silver",
+  "currency.meridian_currency.silver.mixed": "%s liang and %s qian",
+  "guide.meridian_currency.title": "Copper and Silver"
+}

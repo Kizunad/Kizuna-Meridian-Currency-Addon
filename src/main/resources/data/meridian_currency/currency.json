@@ -1,0 +1,67 @@
+{
+  "currencies": [
+    {
+      "id": "meridian_currency:copper",
+      "settlement_group": "meridian_currency:bullion",
+      "rate": 1
+    },
+    {
+      "id": "meridian_currency:silver",
+      "settlement_group": "meridian_currency:bullion",
+      "rate": 100,
+      "units_per_major": 10
+    }
+  ],
+  "denominations": [
+    {
+      "item": "meridian_currency:copper_cash",
+      "currency_id": "meridian_currency:copper",
+      "units": 1,
+      "stack_limit": 64
+    },
+    {
+      "item": "meridian_currency:cash_string",
+      "currency_id": "meridian_currency:copper",
+      "units": 1000,
+      "stack_limit": 16
+    },
+    {
+      "item": "meridian_currency:silver_fragment",
+      "currency_id": "meridian_currency:silver",
+      "units": 1,
+      "stack_limit": 64
+    },
+    {
+      "item": "meridian_currency:silver_sycee",
+      "currency_id": "meridian_currency:silver",
+      "units": 10,
+      "stack_limit": 16
+    }
+  ],
+  "exchanges": [
+    {
+      "first": "meridian_currency:copper_cash",
+      "first_count": 100,
+      "second": "meridian_currency:silver_fragment",
+      "second_count": 1
+    },
+    {
+      "first": "meridian_currency:copper_cash",
+      "first_count": 1000,
+      "second": "meridian_currency:cash_string",
+      "second_count": 1
+    },
+    {
+      "first": "meridian_currency:silver_fragment",
+      "first_count": 10,
+      "second": "meridian_currency:silver_sycee",
+      "second_count": 1
+    },
+    {
+      "first": "meridian_currency:cash_string",
+      "first_count": 1,
+      "second": "meridian_currency:silver_sycee",
+      "second_count": 1
+    }
+  ]
+}

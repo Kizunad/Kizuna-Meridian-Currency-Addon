@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "meridian_currency",
+  "version": "${version}",
+  "name": "铜钱银两",
+  "contact": {
+    "homepage": "https://github.com/Kizunad/Kizuna-Meridian-Currency-Addon",
+    "sources": "https://github.com/Kizunad/Kizuna-Meridian-Currency-Addon",
+    "issues": "https://github.com/Kizunad/Kizuna-Meridian-Currency-Addon/issues"
+  },
+  "icon": "assets/meridian_currency/icon.png",
+  "description": "Trade copper cash and silver by weight.\n以铜钱与银两收付、找零和拆兑。",
+  "authors": [
+    "Kizunad"
+  ],
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "environment": "*",
+  "custom": {
+    "meridian_currency:catalog": "data/meridian_currency/currency.json"
+  },
+  "depends": {
+    "java": ">=25",
+    "minecraft": "26.2",
+    "fabricloader": ">=0.20.1",
+    "fabric-api": "*"
+  },
+  "entrypoints": {
+    "main": [
+      "dev.kizuna.meridian.currency.CurrencyMod"
+    ]
+  }
+}

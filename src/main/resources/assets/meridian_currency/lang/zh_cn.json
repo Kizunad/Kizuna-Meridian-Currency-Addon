@@ -1,0 +1,16 @@
+{
+  "itemGroup.meridian_currency.money": "铜钱银两",
+  "item.meridian_currency.copper_cash": "铜钱",
+  "item.meridian_currency.copper_cash.description": "一枚方孔钱，值一文。",
+  "item.meridian_currency.cash_string": "一贯钱",
+  "item.meridian_currency.cash_string.description": "一绳穿足千文。",
+  "item.meridian_currency.silver_fragment": "碎银",
+  "item.meridian_currency.silver_fragment.description": "几块剪银，合重一钱。",
+  "item.meridian_currency.silver_sycee": "银锭",
+  "item.meridian_currency.silver_sycee.description": "铸银成锭，重一两。",
+  "currency.meridian_currency.copper.units": "%s 文",
+  "currency.meridian_currency.silver.units": "%s 钱银",
+  "currency.meridian_currency.silver.major": "%s 两银",
+  "currency.meridian_currency.silver.mixed": "%s 两 %s 钱银",
+  "guide.meridian_currency.title": "铜钱银两图鉴"
+}

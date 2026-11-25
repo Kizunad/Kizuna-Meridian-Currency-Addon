@@ -1,0 +1,92 @@
+plugins {
+    id 'java-library'
+    alias(libs.plugins.fabric.loom)
+}
+
+group = 'dev.kizuna.meridian.currency'
+version = '0.1.0'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
+    withSourcesJar()
+}
+
+dependencies {
+    minecraft libs.minecraft
+    implementation libs.fabric.loader
+    implementation libs.fabric.api
+    testImplementation libs.junit4
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = libs.versions.java.get().toInteger()
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand([version: project.version]) { escapeBackslash = true }
+    }
+}
+
+jar { from 'LICENSE', 'NOTICE' }
+
+apply from: new File(kizunaWorkspace.directory('framework'), 'scripts/full-assembly.gradle')
+
+sourceSets {
+    [gametest, clienttest].each {
+        it.compileClasspath += main.compileClasspath + main.output
+        it.runtimeClasspath += main.runtimeClasspath + main.output
+    }
+}
+
+dependencies {
+    // 用真实玩家列表和进出服钩子验收，网络传输采用工作区共用的内存连接。
+    gametestImplementation files(kizunaWorkspace.artifact('technique', 'fabric', false).path
+            .replace('.jar', '-test-fixtures.jar'))
+}
+
+loom {
+    mods {
+        meridian_currency { sourceSet sourceSets.main }
+        meridian_currency_gametest { sourceSet sourceSets.gametest }
+        meridian_currency_clienttest { sourceSet sourceSets.clienttest }
+    }
+    runs {
+        gametest {
+            server()
+            source sourceSets.gametest
+            runDir providers.gradleProperty('gametestRunDir').getOrElse('build/gametest')
+            vmArg '-Dfabric-api.gametest'
+            vmArg '-Dfabric-api.gametest.report-file=build/gametest-results.xml'
+            if (providers.gradleProperty('gametestFilter').isPresent()) {
+                vmArg "-Dfabric-api.gametest.filter=${providers.gradleProperty('gametestFilter').get()}"
+            }
+            if (providers.gradleProperty('currencyRestart').isPresent()) {
+                vmArg "-Dmeridian.currency.restart=${providers.gradleProperty('currencyRestart').get()}"
+            }
+        }
+        clientGametest {
+            client()
+            source sourceSets.clienttest
+            runDir providers.gradleProperty('clienttestRunDir').getOrElse('build/clienttest')
+            vmArg '-Dfabric.client.gametest'
+            vmArg '-Dfabric.client.gametest.modid=meridian_currency_clienttest'
+            programArgs '--width', '1280', '--height', '720'
+        }
+    }
+}
+
+tasks.named('runClientGametest') {
+    doFirst {
+        def directory = file(providers.gradleProperty('clienttestRunDir').getOrElse('build/clienttest'))
+        directory.mkdirs()
+        new File(directory, 'options.txt').text = 'onboardAccessibility:false\nlang:zh_cn\n'
+    }
+}

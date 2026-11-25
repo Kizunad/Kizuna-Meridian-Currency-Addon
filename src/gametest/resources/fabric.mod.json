@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "meridian_currency_gametest",
+  "version": "1.0.0",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "dev.kizuna.meridian.currency.CurrencyGameTest",
+      "dev.kizuna.meridian.currency.CurrencyRecoveryGameTest"
+    ]
+  },
+  "depends": {
+    "meridian_currency": "*"
+  }
+}

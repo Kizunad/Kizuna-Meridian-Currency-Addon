@@ -1,0 +1,96 @@
+{
+  "type": "minecraft:notice",
+  "title": {
+    "translate": "guide.meridian_currency.title"
+  },
+  "body": [
+    {
+      "type": "minecraft:item",
+      "item": {
+        "id": "meridian_currency:copper_cash",
+        "components": {
+          "minecraft:item_model": "meridian_currency:guide/copper_cash"
+        }
+      },
+      "description": {
+        "contents": {
+          "translate": "item.meridian_currency.copper_cash",
+          "extra": [
+            {
+              "text": "  "
+            },
+            {
+              "translate": "item.meridian_currency.copper_cash.description"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "minecraft:item",
+      "item": {
+        "id": "meridian_currency:cash_string",
+        "components": {
+          "minecraft:item_model": "meridian_currency:guide/cash_string"
+        }
+      },
+      "description": {
+        "contents": {
+          "translate": "item.meridian_currency.cash_string",
+          "extra": [
+            {
+              "text": "  "
+            },
+            {
+              "translate": "item.meridian_currency.cash_string.description"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "minecraft:item",
+      "item": {
+        "id": "meridian_currency:silver_fragment",
+        "components": {
+          "minecraft:item_model": "meridian_currency:guide/silver_fragment"
+        }
+      },
+      "description": {
+        "contents": {
+          "translate": "item.meridian_currency.silver_fragment",
+          "extra": [
+            {
+              "text": "  "
+            },
+            {
+              "translate": "item.meridian_currency.silver_fragment.description"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "minecraft:item",
+      "item": {
+        "id": "meridian_currency:silver_sycee",
+        "components": {
+          "minecraft:item_model": "meridian_currency:guide/silver_sycee"
+        }
+      },
+      "description": {
+        "contents": {
+          "translate": "item.meridian_currency.silver_sycee",
+          "extra": [
+            {
+              "text": "  "
+            },
+            {
+              "translate": "item.meridian_currency.silver_sycee.description"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
