@@ -20,7 +20,10 @@ dependencies {
     minecraft libs.minecraft
     implementation libs.fabric.loader
     implementation libs.fabric.api
+    compileOnly libs.owo
+    compileOnly files(kizunaWorkspace.artifact('inventory-ui', '', false))
     testImplementation libs.junit4
+    testRuntimeOnly libs.owo
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -40,6 +43,7 @@ jar { from 'LICENSE', 'NOTICE' }
 apply from: new File(kizunaWorkspace.directory('framework'), 'scripts/full-assembly.gradle')
 
 sourceSets {
+    main.java.srcDir 'src/client/java'
     [gametest, clienttest].each {
         it.compileClasspath += main.compileClasspath + main.output
         it.runtimeClasspath += main.runtimeClasspath + main.output

@@ -22,7 +22,13 @@ import net.minecraft.world.item.ItemStack;
 public final class MerchantOffers {
     public enum Page { BUY, SELL }
 
-    public record Row(Identifier id, ItemStack goods, Price price, int availableLots) {
+    private static final String DEFAULT_COUNT_FORMAT = "trade.meridian_currency.stock.items";
+
+    public record Row(Identifier id, ItemStack goods, Price price, int availableLots, String countFormat) {
+        public Row(Identifier id, ItemStack goods, Price price, int availableLots) {
+            this(id, goods, price, availableLots, DEFAULT_COUNT_FORMAT);
+        }
+
         public Row {
             goods = goods.copy();
         }
@@ -33,7 +39,7 @@ public final class MerchantOffers {
         }
     }
 
-    record Offer(Identifier id, ItemStack template, Price price, int target) {
+    record Offer(Identifier id, ItemStack template, Price price, int target, String countFormat) {
         int available(Page page, List<ItemStack> till, List<ItemStack> purse) {
             int held = count(till);
             int lot = template.getCount();
@@ -97,9 +103,10 @@ public final class MerchantOffers {
             // 验证最大一栈总价，未知币种及整数溢出在发布目录前拒绝。
             long value = CurrencyMod.catalog().value(price);
             Math.multiplyExact(value, goods.getMaxStackSize() / lot);
+            String countFormat = GsonHelper.getAsString(row, "count_format", DEFAULT_COUNT_FORMAT);
             switch (GsonHelper.getAsString(row, "direction")) {
-                case "buy" -> buy.add(new Offer(id, goods, price, 0));
-                case "sell" -> sell.add(new Offer(id, goods, price, positiveInt(row, "target", 0)));
+                case "buy" -> buy.add(new Offer(id, goods, price, 0, countFormat));
+                case "sell" -> sell.add(new Offer(id, goods, price, positiveInt(row, "target", 0), countFormat));
                 default -> throw new IllegalArgumentException("未知买卖方向 " + id);
             }
         }
@@ -129,7 +136,7 @@ public final class MerchantOffers {
     }
 
     List<Row> rows(Page page, List<ItemStack> stock, List<ItemStack> purse) {
-        return page(page).stream().map(offer ->
-                new Row(offer.id(), offer.template(), offer.price(), offer.available(page, stock, purse))).toList();
+        return page(page).stream().map(offer -> new Row(offer.id(), offer.template(), offer.price(),
+                offer.available(page, stock, purse), offer.countFormat())).toList();
     }
 }

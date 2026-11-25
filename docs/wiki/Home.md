@@ -26,6 +26,8 @@
 `<namespace>:<name>` 引用。根对象的 `offers` 是有序数组，两页分别保留本方向的行序。
 每行的 `id` 在同一货单内唯一，`direction` 从玩家角度取 `buy` 或 `sell`。
 `goods` 使用原版物品栈（含组件，`count` 是每份件数），`price` 是每份的价格。
+单件货的余量优先使用物品翻译键 `trade.<命名空间>.<物品路径>.count`。货行可以在 `count_format` 指定备用翻译键，
+如 `trade.meridian_currency.stock.scrolls`，中文为「%s 卷」，英文为「%s」。省略时中文用「个」；多件一份按「份」计。
 收购行另填正整数 `target`，按钱匣里同物品、同组件的实物数扣减可收数量。
 整批货单通过校验才替换旧目录，已有钱匣继续使用存档。[示例数据包](../../src/gametest/resources/data/meridian_currency_gametest/merchant_offers/counter.json)
 
@@ -41,6 +43,8 @@
    `view` 刷新余量并比较钱匣水位。关窗调用 `close(player, sessionId)`。
 5. 世界目录 `meridian_currency/merchant-tickets/` 为每位玩家原子保存最近发出的凭据。
    重连时由 `lastTicket(player)` 取回；已成交可取原回执，重启前只报价的订单须重新选货。
+
+宿主在玩家与商人交互时调用 `TradeCounter.open(player, stall, openingSlots, greeting)`。此入口在服务端开匣并将当前货单发给玩家。窗口使用玩家选择的工作台外框，关闭、离开工作台或商人离场均释放会话。钱货明细来自服务端报价，货单或钱包变动后须重新看价，再确认成交。[窗口入口](../../src/main/java/dev/kizuna/meridian/currency/TradeCounter.java)
 
 ## 扩充目录
 

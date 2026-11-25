@@ -25,6 +25,7 @@
     "fabric-api": "*"
   },
   "entrypoints": {
+    "kizuna_inventory_ui": ["dev.kizuna.meridian.currency.client.TradeModule"],
     "main": [
       "dev.kizuna.meridian.currency.CurrencyMod"
     ]
