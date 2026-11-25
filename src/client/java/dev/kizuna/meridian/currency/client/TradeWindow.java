@@ -18,6 +18,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.item.ItemStack;
 
 import static dev.kizuna.meridian.currency.TradeCounter.label;
@@ -68,6 +69,8 @@ final class TradeWindow extends BaseUIComponent {
     @Override
     public void draw(OwoUIGraphics context, int mouseX, int mouseY, float partialTicks, float delta) {
         graphics = context;
+        // 货单遮住世界中的姓名牌，窗框仍使用工作区主题。
+        context.fill(x, y, x + width, y + height, ARGB.opaque(runtime.color(ThemeTokens.PANEL)));
         targets.clear();
         listArea = null;
         int right = x + width - PAD;
