@@ -1,0 +1,7 @@
+{
+  "offers": [
+    {"id":"fixture:book","direction":"buy","goods":{"id":"minecraft:book"},"price":{"currency_id":"meridian_currency:copper","units":120}},
+    {"id":"fixture:paper","direction":"buy","goods":{"id":"minecraft:paper","count":2},"price":{"currency_id":"meridian_currency:copper","units":1}},
+    {"id":"fixture:hide","direction":"sell","goods":{"id":"minecraft:leather"},"price":{"currency_id":"meridian_currency:copper","units":35},"target":3}
+  ]
+}

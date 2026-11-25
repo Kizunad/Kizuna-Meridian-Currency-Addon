@@ -83,12 +83,19 @@ public final class CurrencyService {
     private final MinecraftServer server;
     private final DynamicOps<JsonElement> ops;
     private final CurrencyJournal journal;
+    private final MerchantService merchants;
     private final Map<UUID, CurrencyAccount> tills = new HashMap<>();
 
     CurrencyService(MinecraftServer server, Path directory) {
         this.server = server;
         this.ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
         this.journal = new CurrencyJournal(directory);
+        this.merchants = new MerchantService(server, this, directory);
+    }
+
+    public MerchantService merchants() {
+        requireThread(server);
+        return merchants;
     }
 
     public static CurrencyService get(MinecraftServer server) {
@@ -240,7 +247,7 @@ public final class CurrencyService {
         }
     }
 
-    private static void requireThread(MinecraftServer server) {
+    static void requireThread(MinecraftServer server) {
         if (!server.isSameThread()) {
             throw new IllegalStateException("货币操作必须在服务端主线程执行");
         }

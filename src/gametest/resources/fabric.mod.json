@@ -6,7 +6,10 @@
   "entrypoints": {
     "fabric-gametest": [
       "dev.kizuna.meridian.currency.CurrencyGameTest",
-      "dev.kizuna.meridian.currency.CurrencyRecoveryGameTest"
+      "dev.kizuna.meridian.currency.CurrencyRecoveryGameTest",
+      "dev.kizuna.meridian.currency.MerchantGameTest",
+      "dev.kizuna.meridian.currency.MerchantCatalogGameTest",
+      "dev.kizuna.meridian.currency.MerchantRestartGameTest"
     ]
   },
   "depends": {

@@ -34,6 +34,7 @@ final class CurrencyJournal {
         this.directory = directory;
         try {
             Files.createDirectories(directory.resolve("tills"));
+            Files.createDirectories(directory.resolve("merchant-tickets"));
             // 世界目录先落盘，首次开服立即断电也能找到已确认交易。
             syncDirectory(directory.getParent());
             syncDirectory(directory);
@@ -121,7 +122,7 @@ final class CurrencyJournal {
         byAccount.computeIfAbsent(parties.payee(), key -> new ArrayList<>()).add(entry);
     }
 
-    private static void publish(Path path, String json) throws IOException {
+    static void publish(Path path, String json) throws IOException {
         // 临时文件写齐并刷盘后才原子发布；恢复扫描仅接纳完整的 .json 文件。
         var directory = path.getParent();
         var temporary = Files.createTempFile(directory, "pending-", ".tmp");

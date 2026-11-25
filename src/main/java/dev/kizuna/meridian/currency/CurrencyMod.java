@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.Registry;
@@ -52,6 +53,19 @@ public final class CurrencyMod implements ModInitializer {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
                 CurrencyService.get(server).player(handler.player));
         ServerLifecycleEvents.SERVER_STOPPED.register(CurrencyService::close);
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+                CurrencyService.get(server).merchants().disconnected(handler.player));
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> CurrencyService.get(server));
+        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, resources, success) -> {
+            if (success) {
+                try {
+                    CurrencyService.get(server).merchants().reload(resources);
+                } catch (IllegalArgumentException invalid) {
+                    org.slf4j.LoggerFactory.getLogger("meridian_currency").error("保留重载前的商人货单", invalid);
+                }
+            }
+        });
+        ServerTickEvents.END_SERVER_TICK.register(server -> CurrencyService.get(server).merchants().expire());
     }
 
     private static CurrencyCatalog readCatalogs() {
