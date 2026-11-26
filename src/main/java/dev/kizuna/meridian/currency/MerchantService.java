@@ -70,12 +70,12 @@ public final class MerchantService {
         sessions.values().forEach(session -> session.pending = null);
     }
 
-    public View open(ServerPlayer player, Stall stall, List<ItemStack> opening) {
+    public View open(ServerPlayer player, Stall stall) {
         requireOnline(player);
         if (!stall.accessible(player) || !catalogs.containsKey(stall.catalog())) {
             throw new TradeRejected(TradeRejected.Reason.STALE);
         }
-        var till = currency.openTill(stall.id(), opening);
+        var till = currency.merchant(stall.actor());
         var session = new Session(player, stall, till);
         sessions.put(player.getUUID(), session);
         return view(player, session.id);

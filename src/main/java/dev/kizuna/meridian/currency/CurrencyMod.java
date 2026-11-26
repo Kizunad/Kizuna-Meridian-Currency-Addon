@@ -44,6 +44,7 @@ public final class CurrencyMod implements ModInitializer {
         // 物品注册表冻结前读取所有声明的目录，模型和语言键沿用面额物品的资源位置。
         catalog = readCatalogs();
         TradeCounter.register();
+        MobPurses.register();
         var items = catalog.denominations().stream().map(CurrencyMod::registerItem).toList();
         var tab = FabricCreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.meridian_currency.money"))

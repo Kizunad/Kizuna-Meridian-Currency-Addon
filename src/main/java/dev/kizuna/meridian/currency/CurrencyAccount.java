@@ -1,14 +1,17 @@
 package dev.kizuna.meridian.currency;
 
+import dev.kizuna.meridian.inventory.MobInventories;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /** 只能经创建它的服务报价与交割。公开快照不持有实物栈引用。 */
-public abstract sealed class CurrencyAccount permits CurrencyAccount.PlayerAccount, CurrencyAccount.Till {
+public abstract sealed class CurrencyAccount permits CurrencyAccount.PlayerAccount, CurrencyAccount.Till,
+        CurrencyAccount.MobAccount {
     final CurrencyService owner;
     private final String id;
 
@@ -87,6 +90,47 @@ public abstract sealed class CurrencyAccount permits CurrencyAccount.PlayerAccou
             player.setAttached(CurrencyMod.LAST_PAYMENT, sequence);
             inventory.setChanged();
             player.inventoryMenu.broadcastChanges();
+        }
+    }
+
+    static final class MobAccount extends CurrencyAccount {
+        private final Mob mob;
+
+        MobAccount(CurrencyService owner, Mob mob) {
+            super(owner, "mob/" + mob.getUUID());
+            this.mob = mob;
+        }
+
+        @Override
+        public List<ItemStack> contents() {
+            return MobInventories.inventory(mob).snapshot();
+        }
+
+        @Override
+        long watermark() {
+            return mob.getAttachedOrElse(CurrencyMod.LAST_PAYMENT, 0L);
+        }
+
+        @Override
+        int edits() {
+            if (!mob.isAlive() || mob.isRemoved() || !MobInventories.state(mob).available()) {
+                throw new TradeRejected(TradeRejected.Reason.STALE);
+            }
+            // 外部拾取、缴械和搬动由报价的逐格实物比较检测。
+            return 0;
+        }
+
+        @Override
+        void install(long revision, List<CurrencyJournal.Slot> changes) {
+            var pack = MobInventories.inventory(mob);
+            for (var change : changes) {
+                var target = owner.decode(change.stack());
+                int slot = change.index();
+                if (!ItemStack.matches(pack.peek(slot), target)) {
+                    pack.exchange(slot, target);
+                }
+            }
+            mob.setAttached(CurrencyMod.LAST_PAYMENT, revision);
         }
     }
 

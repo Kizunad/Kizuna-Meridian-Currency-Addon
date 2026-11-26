@@ -13,10 +13,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import dev.kizuna.meridian.inventory.MobInventories;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -125,6 +129,50 @@ public final class CurrencyService {
         var account = new CurrencyAccount.PlayerAccount(this, player);
         recover(account);
         return account;
+    }
+
+    public CurrencyAccount merchant(Mob mob) {
+        requireThread(server);
+        if (mob.level().getServer() != server || !MobInventories.state(mob).available() || !mob.isAlive()) {
+            throw new TradeRejected(TradeRejected.Reason.STALE);
+        }
+        MobInventories.open(mob);
+        return recoveredMobAccount(mob);
+    }
+
+    private CurrencyAccount recoveredMobAccount(Mob mob) {
+        var account = new CurrencyAccount.MobAccount(this, mob);
+        recover(account);
+        return account;
+    }
+
+    void observe(Mob mob, ServerLevel level, PurseTable table) {
+        var account = recoveredMobAccount(mob);
+        if (mob.hasAttached(MobPurses.ISSUED)) {
+            return;
+        }
+        if (account.watermark() > 0) {
+            mob.setAttached(MobPurses.ISSUED, true /* value */);
+            return;
+        }
+        List<ItemStack> stacks;
+        var id = mob.getUUID();
+        if (mob.getType() == EntityTypes.WANDERING_TRADER && journal.hasOpening(id)) {
+            // 旧版到访已有交易流水，搬回扣除已售货物、计入实收钱款后的余货。
+            var old = openTill(id);
+            stacks = old.contents();
+            tills.remove(id);
+        } else {
+            stacks = table.generate(mob);
+        }
+        var pack = MobInventories.inventory(mob);
+        for (var stack : stacks) {
+            pack.insert(stack);
+            if (!stack.isEmpty()) {
+                mob.spawnAtLocation(level, stack);
+            }
+        }
+        mob.setAttached(MobPurses.ISSUED, true /* value */);
     }
 
     /** 初始化时给出各格实物；同一钱匣再次打开只读取原库存和之后的收付。 */

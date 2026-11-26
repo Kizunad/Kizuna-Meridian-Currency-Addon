@@ -1,11 +1,16 @@
 package dev.kizuna.meridian.currency;
 
+import dev.kizuna.meridian.inventory.MobInventories;
+import dev.kizuna.meridian.inventory.MobInventory;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.item.ItemStack;
 
 final class MerchantFixture implements AutoCloseable {
@@ -28,7 +33,10 @@ final class MerchantFixture implements AutoCloseable {
         var level = test.getLevel();
         customer = CurrencyRecoveryGameTest.login(level, playerId, "Trade" + playerId.toString().substring(0, 8));
         player = customer.player();
-        var actor = test.spawn(EntityTypes.WANDERING_TRADER, 1, 1, 1);
+        var actor = EntityTypes.WANDERING_TRADER.create(level, EntitySpawnReason.COMMAND);
+        actor.setUUID(tillId);
+        actor.setPos(Vec3.atBottomCenterOf(test.absolutePos(new BlockPos(1, 1, 1))));
+        test.assertTrue(level.addFreshEntity(actor), "交易演员入场失败");
         player.setPos(actor.position());
         currency = CurrencyService.get(level.getServer());
         trades = currency.merchants();
@@ -48,7 +56,16 @@ final class MerchantFixture implements AutoCloseable {
     }
 
     MerchantService.View open(ItemStack... slots) {
-        return trades.open(player, stall, List.of(slots));
+        if (slots.length > 0) {
+            var pack = MobInventories.open(stall.actor());
+            for (int i = 0; i < MobInventory.SIZE; i++) {
+                pack.extract(i, Integer.MAX_VALUE);
+            }
+            for (int i = 0; i < slots.length; i++) {
+                pack.insertAt(i, slots[i].copy());
+            }
+        }
+        return trades.open(player, stall);
     }
 
     MerchantService.Quoted quote(MerchantService.View view, MerchantOffers.Page page, int index, int lots) {
@@ -65,7 +82,7 @@ final class MerchantFixture implements AutoCloseable {
     }
 
     CurrencyAccount till() {
-        return currency.openTill(stall.id());
+        return currency.merchant(stall.actor());
     }
 
     static ItemStack cash(int count) {
@@ -90,6 +107,7 @@ final class MerchantFixture implements AutoCloseable {
 
     @Override
     public void close() {
+        stall.actor().discard();
         customer.close();
     }
 }

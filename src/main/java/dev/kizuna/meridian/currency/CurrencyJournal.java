@@ -76,6 +76,10 @@ final class CurrencyJournal {
         return Math.incrementExact(latest);
     }
 
+    boolean hasOpening(UUID id) {
+        return Files.isRegularFile(directory.resolve("tills").resolve(id + ".json"));
+    }
+
     List<JsonElement> openTill(UUID id, List<JsonElement> opening) {
         checkAvailable();
         var path = directory.resolve("tills").resolve(id + ".json");

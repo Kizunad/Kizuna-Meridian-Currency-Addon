@@ -5,10 +5,10 @@ import java.util.UUID;
 import java.util.function.BiPredicate;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 
-/** 摊位与钱匣同 ID。宿主授权可绑定到访、事件及章节，即时复查。 */
-public record Stall(UUID id, Identifier catalog, LivingEntity actor, BiPredicate<ServerPlayer, LivingEntity> admits) {
+/** 摊位记录本次到访，演员背囊负责收付。宿主授权可绑定到访、事件及章节，即时复查。 */
+public record Stall(UUID id, Identifier catalog, Mob actor, BiPredicate<ServerPlayer, Mob> admits) {
     public Stall {
         Objects.requireNonNull(id);
         Objects.requireNonNull(catalog);

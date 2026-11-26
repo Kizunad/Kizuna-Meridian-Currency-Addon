@@ -3,7 +3,15 @@ package dev.kizuna.meridian.currency;
 import static dev.kizuna.meridian.currency.MerchantFixture.*;
 import static dev.kizuna.meridian.currency.MerchantOffers.Page.BUY;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.LevelResource;
 import java.util.UUID;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -18,7 +26,7 @@ public final class MerchantRestartGameTest {
     private static final Identifier PAPER_ITEM = Identifier.parse("minecraft:paper");
 
     @GameTest
-    public void restartRestoresReceiptAndRefusesUnconfirmedTicket(GameTestHelper test) {
+    public void restartRestoresReceiptAndRefusesUnconfirmedTicket(GameTestHelper test) throws IOException {
         var mode = System.getProperty("meridian.currency.restart", "reload");
         if (!mode.equals("read")) {
             for (var order : Order.values()) {
@@ -39,10 +47,14 @@ public final class MerchantRestartGameTest {
         test.succeed();
     }
 
-    private static void place(GameTestHelper test, Order order) {
+    private static void place(GameTestHelper test, Order order) throws IOException {
         try (var f = fixture(test, order)) {
             f.carry(cash(1));
             var view = f.open(new ItemStack(Items.PAPER, PAPER_LOT), ItemStack.EMPTY);
+            var actor = f.stall.actor();
+            var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, actor.registryAccess());
+            actor.saveWithoutId(output);
+            NbtIo.writeCompressed(output.buildResult(), savedActor(f));
             var quote = f.quote(view, BUY, PAPER, 1);
             if (order == Order.CONFIRMED) {
                 f.confirm(quote);
@@ -51,8 +63,11 @@ public final class MerchantRestartGameTest {
         }
     }
 
-    private static void verify(GameTestHelper test, Order order) {
+    private static void verify(GameTestHelper test, Order order) throws IOException {
         try (var f = fixture(test, order)) {
+            var actor = f.stall.actor();
+            var savedActor = NbtIo.readCompressed(savedActor(f), NbtAccounter.unlimitedHeap());
+            actor.load(TagValueInput.create(ProblemReporter.DISCARDING, actor.registryAccess(), savedActor));
             var ticket = f.trades.lastTicket(f.player).orElseThrow();
             var operation = ticket.operation(f.player.getUUID());
             var saved = f.currency.receipt(operation);
@@ -69,6 +84,11 @@ public final class MerchantRestartGameTest {
             }
             System.out.println("MERCHANT_RESTORE " + order + " " + operation + " pid=" + ProcessHandle.current().pid());
         }
+    }
+
+    private static Path savedActor(MerchantFixture fixture) {
+        var root = fixture.player.level().getServer().getWorldPath(LevelResource.ROOT);
+        return root.resolve("merchant-" + fixture.stall.id() + ".nbt");
     }
 
     private static MerchantFixture fixture(GameTestHelper test, Order order) {

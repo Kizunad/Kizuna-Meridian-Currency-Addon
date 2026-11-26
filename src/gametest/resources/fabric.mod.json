@@ -9,10 +9,13 @@
       "dev.kizuna.meridian.currency.CurrencyRecoveryGameTest",
       "dev.kizuna.meridian.currency.MerchantGameTest",
       "dev.kizuna.meridian.currency.MerchantCatalogGameTest",
-      "dev.kizuna.meridian.currency.MerchantRestartGameTest"
+      "dev.kizuna.meridian.currency.MerchantRestartGameTest",
+      "dev.kizuna.meridian.currency.MobPurseGameTest",
+      "dev.kizuna.meridian.currency.CorpsePurseGameTest"
     ]
   },
   "depends": {
-    "meridian_currency": "*"
+    "meridian_currency": "*",
+    "meridian_vanilla_damage": "*"
   }
 }

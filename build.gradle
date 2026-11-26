@@ -20,6 +20,10 @@ dependencies {
     minecraft libs.minecraft
     implementation libs.fabric.loader
     implementation libs.fabric.api
+    compileOnly libs.protobuf.java
+    compileOnly('local.meridian:server') { transitive = false }
+    compileOnly('dev.kizuna.meridian.inventory:fabric') { transitive = false }
+    compileOnly('dev.kizuna.meridian.vanilla:fabric') { transitive = false }
     compileOnly libs.owo
     compileOnly files(kizunaWorkspace.artifact('inventory-ui', '', false))
     testImplementation libs.junit4

@@ -49,8 +49,8 @@ public final class TradeCounter {
     }
 
     /** 内容宿主完成交互准入后打开窗口。摊位身份和初始实物沿用交易服务。 */
-    public static void open(ServerPlayer player, Stall stall, List<ItemStack> opening, Component greeting) {
-        var view = merchants(player).open(player, stall, opening);
+    public static void open(ServerPlayer player, Stall stall, Component greeting) {
+        var view = merchants(player).open(player, stall);
         var session = view.session();
         WATCHERS.put(player, new Watching(session, view));
         var packet = new TradeWire.Open(session, stall.actor().getDisplayName(), greeting, stock(view));

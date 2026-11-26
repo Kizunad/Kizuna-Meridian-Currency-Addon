@@ -22,7 +22,9 @@
     "java": ">=25",
     "minecraft": "26.2",
     "fabricloader": ">=0.20.1",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "meridian_mob_inventory": "*",
+    "meridian_vanilla_damage": "*"
   },
   "entrypoints": {
     "kizuna_inventory_ui": ["dev.kizuna.meridian.currency.client.TradeModule"],

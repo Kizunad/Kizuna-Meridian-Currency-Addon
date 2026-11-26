@@ -8,3 +8,10 @@ pluginManagement {
 
 apply from: new File(rootDir.parentFile, 'Kizuna-Meridian-Mod-Framework/scripts/workspace.gradle')
 rootProject.name = 'kizuna-meridian-currency-addon'
+
+kizunaWorkspace.includeSource('framework', [server: 'local.meridian:server', client: 'local.meridian:client'])
+kizunaWorkspace.includeSource('mob-inventory', [fabric: 'dev.kizuna.meridian.inventory:fabric'])
+kizunaWorkspace.includeSource('vanilla-damage', [
+        fabric: 'dev.kizuna.meridian.vanilla:fabric',
+        server: 'dev.kizuna.meridian.vanilla:server'
+])

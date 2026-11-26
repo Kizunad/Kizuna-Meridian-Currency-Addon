@@ -11,7 +11,7 @@
 
 ## 调用服务
 
-在服务端主线程经 `CurrencyService.get(server)` 取得本世界服务。`player(player)` 使用本人原版随身物品槽，含快捷栏。首次 `openTill(id, slots)` 由内容宿主提供库存，空栈也占一格，以后用 `openTill(id)` 重新打开同一钱匣。买卖双方可以是玩家或独立钱匣。
+在服务端主线程经 `CurrencyService.get(server)` 取得本世界服务。`player(player)` 使用本人原版随身物品槽，含快捷栏。生物商人用 `merchant(mob)` 从背囊收付。独立钱匣首次调用 `openTill(id, slots)` 时由内容宿主提供库存，空栈也占一格，以后用 `openTill(id)` 重开。
 
 1. 内容宿主核对事件权限、距离、收付方向及可售商品。用 `operationId(actor, event, branch, delivery)` 生成稳定操作号，重进同一步时先查 `receipt(id)`。
 2. `quote(payer, payee, price, goods)` 给出本次扣款和找零各面额的件数。货物来自收款方，组件随实物转交；纯收付用三参数重载。剧情价格例为 `{"currency_id":"meridian_currency:copper","units":120}`，可用 `Price.CODEC` 读取。银的最小单位为钱。`catalog.format(price)` 按客户端语言显示文、钱或两。
@@ -32,8 +32,7 @@
 整批货单通过校验才替换旧目录，已有钱匣继续使用存档。[示例数据包](../../src/gametest/resources/data/meridian_currency_gametest/merchant_offers/counter.json)
 
 1. 在服务端主线程取 `CurrencyService.get(server).merchants()`。宿主以持久摊位 ID、货单 ID、
-   当前演员和即时授权条件构造 `Stall`。用 `open(player, stall, openingSlots)` 建立会话；
-   开张实物含用于收货的空格，同 ID 重开沿用原库存。
+   当前演员和即时授权条件构造 `Stall`。用 `open(player, stall)` 建立会话。演员的真实背囊同时容纳钱货，收货与找零使用其中的空格。
 2. `view` 给出两页货行、按件成份的数量、货单版本、钱匣水位、各实物面额及按结算组折算的总值。
    `availableLots` 反映现货与收购限额，能否付钱、放下货和找零由选货报价决定。
 3. `select` 只接受会话、所见货单版本、页、从零开始的行号、份数及递增请求序号。
@@ -44,7 +43,19 @@
 5. 世界目录 `meridian_currency/merchant-tickets/` 为每位玩家原子保存最近发出的凭据。
    重连时由 `lastTicket(player)` 取回；已成交可取原回执，重启前只报价的订单须重新选货。
 
-宿主在玩家与商人交互时调用 `TradeCounter.open(player, stall, openingSlots, greeting)`。此入口在服务端开匣并将当前货单发给玩家。窗口使用玩家选择的工作台外框，关闭、离开工作台或商人离场均释放会话。钱货明细来自服务端报价，货单或钱包变动后须重新看价，再确认成交。[窗口入口](../../src/main/java/dev/kizuna/meridian/currency/TradeCounter.java)
+宿主在玩家与商人交互时调用 `TradeCounter.open(player, stall, greeting)`。此入口在服务端开匣并将当前货单发给玩家。窗口使用玩家选择的工作台外框，关闭、离开工作台或商人离场均释放会话。钱货明细来自服务端报价，货单或钱包变动后须重新看价，再确认成交。[窗口入口](../../src/main/java/dev/kizuna/meridian/currency/TradeCounter.java)
+
+## 生物随身钱财
+
+[钱数表](../../src/main/resources/data/meridian_currency/mob_purses.json)可由同路径数据包覆盖。
+每行 `types` 列出实体 ID，`mortal`、`wandering_qi`、`true_qi` 下的键是面额物品，值是件数闭区间。
+各面额独立抽数。无身体或游炁未开脉按凡人档，真炁及以上取最高档。巡逻队长和带
+`meridian_currency.purse_leader` 实体标签的头目再抽一份 `leader_bonus`。猪灵蛮兵有独立档位。
+新增面额时，同时登记货币目录与拾取物品标签 `meridian_mob_inventory:pocket_money`。
+
+出生配装完成后，生物首次 tick、开包查看、开担交易或结算掉落时，按当时已有的身体快照发一次钱。旧实体按同样规则补领。
+没有身体时按凡人档，后来建身或晋境不补差额。满囊的溢出实物落在脚边。取走、交易或死亡都改变背囊里的实物。
+演员的成交水位和背囊随实体一起存档，旧货郎首次开包时从旧账取回成交后所余的钱货。
 
 ## 扩充目录
 

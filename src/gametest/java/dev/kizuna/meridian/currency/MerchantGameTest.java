@@ -83,7 +83,9 @@ public final class MerchantGameTest {
     public void noSpaceAndIntakeLimitLeaveGoodsInPlace(GameTestHelper test) {
         try (var f = new MerchantFixture(test)) {
             f.carry(cash(2));
-            var view = f.open(new ItemStack(Items.PAPER, MAX_CASH));
+            var full = java.util.Collections.nCopies(dev.kizuna.meridian.inventory.MobInventory.SIZE,
+                    new ItemStack(Items.PAPER, MAX_CASH));
+            var view = f.open(full.toArray(ItemStack[]::new));
             var till = f.till();
             var stock = till.contents();
             var purse = f.purse().contents();
@@ -112,7 +114,7 @@ public final class MerchantGameTest {
             b.carry(cash(MAX_CASH), cash(PRICE - MAX_CASH));
             var first = a.open(new ItemStack(Items.BOOK), ItemStack.EMPTY);
             b.player.setPos(a.stall.actor().position());
-            var second = b.trades.open(b.player, a.stall, List.of());
+            var second = b.trades.open(b.player, a.stall);
             var win = a.quote(first, BUY, BOOK, 1);
             var lose = b.quote(second, BUY, BOOK, 1);
             var before = b.purse().contents();

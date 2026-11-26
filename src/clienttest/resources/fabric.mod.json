@@ -6,7 +6,8 @@
   "entrypoints": {
     "fabric-client-gametest": [
       "dev.kizuna.meridian.currency.CurrencyClientTest",
-      "dev.kizuna.meridian.currency.client.TradeWindowTest"
+      "dev.kizuna.meridian.currency.client.TradeWindowTest",
+      "dev.kizuna.meridian.currency.MobPurseClientTest"
     ]
   },
   "depends": {

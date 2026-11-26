@@ -6,6 +6,8 @@ import dev.kizuna.meridian.currency.MerchantService;
 import dev.kizuna.meridian.currency.Stall;
 import dev.kizuna.meridian.currency.TradeCounter;
 import dev.kizuna.meridian.currency.TradeRejected;
+import dev.kizuna.meridian.inventory.MobInventories;
+import dev.kizuna.meridian.inventory.MobInventory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -53,7 +55,12 @@ final class CounterFixture {
         level.addFreshEntity(actor);
         carry(player, setup);
         var stall = new Stall(till, CATALOG, actor, (viewer, merchant) -> true);
-        TradeCounter.open(player, stall, opening(setup), Component.literal("腿法卷、火把和干粮都有，也收皮革。"));
+        var pack = MobInventories.open(actor);
+        for (int i = 0; i < MobInventory.SIZE; i++) {
+            pack.extract(i, Integer.MAX_VALUE);
+        }
+        opening(setup).forEach(pack::insert);
+        TradeCounter.open(player, stall, Component.literal("腿法卷、火把和干粮都有，也收皮革。"));
     }
 
     private static List<ItemStack> opening(Setup setup) {
@@ -116,7 +123,7 @@ final class CounterFixture {
     void checkPurchase(MinecraftServer server) {
         var service = CurrencyService.get(server);
         var purse = service.player(player(server));
-        var drawer = service.openTill(till);
+        var drawer = service.merchant(actor);
         require(count(purse, CASH) == CHANGE + LOOSE && count(purse, FRAGMENT) == 0 && count(purse, SCROLL) == 1,
                 "buy_with_change: 玩家实物");
         require(count(drawer, CASH) == 0 && count(drawer, FRAGMENT) == PAID && count(drawer, SCROLL) == SCROLLS - 1,
@@ -126,7 +133,7 @@ final class CounterFixture {
     void checkSale(MinecraftServer server) {
         var service = CurrencyService.get(server);
         var purse = service.player(player(server));
-        var drawer = service.openTill(till);
+        var drawer = service.merchant(actor);
         require(count(purse, CASH) == CHANGE + LOOSE - SALE_CHANGE && count(purse, FRAGMENT) == 1
                 && count(purse, "minecraft:leather") == 0, "sell_with_change: 玩家实物");
         require(count(drawer, CASH) == SALE_CHANGE && count(drawer, FRAGMENT) == 1
