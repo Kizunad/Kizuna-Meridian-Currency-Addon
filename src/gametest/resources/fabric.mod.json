@@ -5,6 +5,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "dev.kizuna.meridian.currency.ParcelEscrowGameTest",
       "dev.kizuna.meridian.currency.CurrencyGameTest",
       "dev.kizuna.meridian.currency.CurrencyRecoveryGameTest",
       "dev.kizuna.meridian.currency.MerchantGameTest",

@@ -1,6 +1,7 @@
 package dev.kizuna.meridian.currency;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import java.nio.file.Path;
@@ -13,7 +14,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import dev.kizuna.meridian.inventory.MobInventories;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -86,6 +92,7 @@ public final class CurrencyService {
     private static final Map<MinecraftServer, CurrencyService> SERVICES = new IdentityHashMap<>();
     private final MinecraftServer server;
     private final DynamicOps<JsonElement> ops;
+    private final DynamicOps<Tag> nbtOps;
     private final CurrencyJournal journal;
     private final MerchantService merchants;
     private final Map<UUID, CurrencyAccount> tills = new HashMap<>();
@@ -93,8 +100,14 @@ public final class CurrencyService {
     CurrencyService(MinecraftServer server, Path directory) {
         this.server = server;
         this.ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
+        this.nbtOps = server.registryAccess().createSerializationContext(NbtOps.INSTANCE);
         this.journal = new CurrencyJournal(directory);
         this.merchants = new MerchantService(server, this, directory);
+    }
+
+    public ParcelEscrow parcels() {
+        requireThread(server);
+        return new ParcelEscrow(this, server);
     }
 
     public MerchantService merchants() {
@@ -191,6 +204,17 @@ public final class CurrencyService {
         return openTill(id, List.of());
     }
 
+    boolean isParked(UUID merchant) {
+        var history = journal.historySince("mob/" + merchant, 0);
+        for (var entry : history.reversed()) {
+            String kind = entry.receipt().order().kind();
+            if (kind.equals("merchant_arrive") || kind.equals("merchant_depart")) {
+                return kind.equals("merchant_depart");
+            }
+        }
+        return false;
+    }
+
     public Quote quote(CurrencyAccount payer, CurrencyAccount payee, Price price) {
         return quote(payer, payee, price, ItemStack.EMPTY);
     }
@@ -208,6 +232,33 @@ public final class CurrencyService {
         String delivery = GsonHelper.toStableString(encode(goods));
         var order = new Order("sale", currency.id().toString(), "", price.units(), delivery);
         return new Quote(buyer, seller, plan, order);
+    }
+
+    /** 双方以指定组件和件数的实物互换；确认时沿用相同的流水和库存版本校验。 */
+    public Quote barter(CurrencyAccount from, CurrencyAccount to, ItemStack tender, ItemStack goods) {
+        if (tender.isEmpty() || goods.isEmpty()) {
+            throw new IllegalArgumentException("物物交换双方须有实物");
+        }
+        String offered = GsonHelper.toStableString(snapshot(tender));
+        String requested = GsonHelper.toStableString(snapshot(goods));
+        var order = new Order("barter", offered, "", 1, requested);
+        return transfer(from, to, slots -> {
+            var payment = SettlementPlan.takeExact(slots.payer(), tender);
+            var delivery = SettlementPlan.takeExact(slots.payee(), goods);
+            SettlementPlan.insert(slots.payer(), delivery);
+            SettlementPlan.insert(slots.payee(), payment);
+            return order;
+        });
+    }
+
+    Quote transfer(CurrencyAccount from, CurrencyAccount to, Function<SettlementPlan.Wallets, Order> exchange) {
+        prepare(from, to);
+        var payer = View.read(from);
+        var payee = View.read(to);
+        var slots = new SettlementPlan.Wallets(SettlementPlan.copy(payer.slots()), SettlementPlan.copy(payee.slots()));
+        var order = exchange.apply(slots);
+        var plan = new SettlementPlan(slots.payer(), slots.payee(), List.of(), List.of());
+        return new Quote(payer, payee, plan, order);
     }
 
     public Quote exchange(CurrencyAccount customer, CurrencyAccount till, Identifier input,
@@ -305,7 +356,7 @@ public final class CurrencyService {
         // 原版背包上次落盘可能早于报价前的移格。包括空位的成交后整幅槽位才能覆盖旧位置。
         var slots = new ArrayList<CurrencyJournal.Slot>(after.size());
         for (int slot = 0; slot < after.size(); slot++) {
-            slots.add(new CurrencyJournal.Slot(account.storageSlot(slot), encode(after.get(slot))));
+            slots.add(new CurrencyJournal.Slot(account.storageSlot(slot), snapshot(after.get(slot))));
         }
         return slots;
     }
@@ -314,14 +365,29 @@ public final class CurrencyService {
         return ItemStack.OPTIONAL_CODEC.encodeStart(ops, stack).getOrThrow();
     }
 
+    JsonElement snapshot(ItemStack stack) {
+        // JSON 数字不保留 NBT 的整数宽度；带组件的格子按原版有类型的 SNBT 保存。
+        if (stack.isEmpty() || stack.getComponentsPatch().isEmpty()) {
+            return encode(stack);
+        }
+        var tag = (CompoundTag) ItemStack.OPTIONAL_CODEC.encodeStart(nbtOps, stack).getOrThrow();
+        var image = new JsonObject();
+        image.add("stack_snbt", TagParser.FLATTENED_CODEC.encodeStart(JsonOps.INSTANCE, tag).getOrThrow());
+        return image;
+    }
+
     private JsonElement openingSlot(ItemStack stack) {
         if (stack.getCount() > stack.getMaxStackSize()) {
             throw new IllegalArgumentException("钱匣初始格超过实物堆叠上限");
         }
-        return encode(stack);
+        return snapshot(stack);
     }
 
     ItemStack decode(JsonElement data) {
+        if (data instanceof JsonObject object && object.has("stack_snbt")) {
+            var tag = TagParser.FLATTENED_CODEC.parse(JsonOps.INSTANCE, object.get("stack_snbt")).getOrThrow();
+            return ItemStack.OPTIONAL_CODEC.parse(nbtOps, tag).getOrThrow();
+        }
         return ItemStack.OPTIONAL_CODEC.parse(ops, data).getOrThrow();
     }
 

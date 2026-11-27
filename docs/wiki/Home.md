@@ -64,3 +64,13 @@
 - `currencies` 声明 ID、结算组和每一最小单位的组内整数价值。新币可使用独立结算组。可选的 `units_per_major` 设置大单位的最小单位数。
 - `denominations` 声明物品 ID、币种、面额和堆叠数，顺序也是创造页顺序。为物品配齐模型、贴图、语言键及图鉴条目。
 - `exchanges` 明列允许兑换的两端件数。两种物品须同属一组且总值相同。一条规则同时允许反向拆兑。
+
+## 实物交换与封包
+
+固定实物对价使用 `barter(from, to, tender, goods)` 报价，再用业务操作号 `settle`。票面、签号、附魔等组件参与匹配。
+
+剧情宿主在开柜时用 `CurrencyService.parcels().arrive(mob, visit)` 领取原商人 UUID 的库存，撤场时先 `depart(mob, visit)`，成功后才移除实体。重绑同一次访客沿用 visit，新一次到访换 visit。退场登记覆盖整个真实背囊，包括当夜买进的实物。
+
+1. 用 `Seal(wrapper, payment, contents, dawn)` 和 `Offer(order, goods, seal)` 固定订单。payment 来自目录中的实际面额与件数，dawn 取首次挂牌时的 `ParcelEscrow.nextDawn(overworldClockTime)`。签底只在服务端保存。邀请前 `preview`；玩家确认后按同一行与夜次复核并调用 `sell`。
+2. 流水一次保存双方槽位、带组件的原银与封包，兑现前原银只属于该订单。封包序号从 0 开始；挂失按下一序号 `reissue`，新包落账时旧包失效。记录的首笔订单号可作为 `CurrencyService.receipt` 的索引。
+3. 次晨起在持有人所在处调用 `open(player, order, serial)`。真包交付封存的原银，假包交纸并退回摊主或其退场库存。重绑商人时调用 `arrive` 可取回暂存退款。背包放不下时整笔仍可重试；重复兑付原序号可重查原回执。[服务端接口](../../src/main/java/dev/kizuna/meridian/currency/ParcelEscrow.java)

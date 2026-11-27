@@ -136,7 +136,11 @@ record SettlementPlan(List<ItemStack> payer, List<ItemStack> payee, List<Currenc
         return slots.stream().filter(stack -> stack.is(item)).mapToInt(ItemStack::getCount).reduce(0, Math::addExact);
     }
 
-    private static List<ItemStack> take(List<ItemStack> slots, Predicate<ItemStack> matches, int count) {
+    static List<ItemStack> takeExact(List<ItemStack> slots, ItemStack sample) {
+        return take(slots, stack -> ItemStack.isSameItemSameComponents(stack, sample), sample.getCount());
+    }
+
+    static List<ItemStack> take(List<ItemStack> slots, Predicate<ItemStack> matches, int count) {
         // 优先取小栈；同物品带不同组件时仍按各自实物交割。
         var indices = IntStream.range(0, slots.size()).boxed()
                 .filter(index -> matches.test(slots.get(index)))
@@ -156,7 +160,7 @@ record SettlementPlan(List<ItemStack> payer, List<ItemStack> payee, List<Currenc
         throw new TradeRejected(TradeRejected.Reason.GOODS);
     }
 
-    private static void insert(List<ItemStack> slots, List<ItemStack> incoming) {
+    static void insert(List<ItemStack> slots, List<ItemStack> incoming) {
         for (var stack : incoming) {
             for (var existing : slots) {
                 if (ItemStack.isSameItemSameComponents(existing, stack)) {
