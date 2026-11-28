@@ -3,6 +3,7 @@ package dev.kizuna.meridian.currency;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import dev.kizuna.meridian.persistence.DurableStateFile;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
@@ -24,6 +25,9 @@ final class CurrencyJournal {
     record Slot(int index, JsonElement stack) {}
     record Entry(CurrencyService.Receipt receipt, List<Slot> payer, List<Slot> payee) {}
     private static final Gson JSON = new Gson();
+    private static final DurableStateFile.DirectorySync DIRECTORY_SYNC =
+            DurableStateFile.directorySync(System.getProperty("os.name"));
+
     private final Path directory;
     private final Map<UUID, Entry> operations = new HashMap<>();
     private final Map<String, List<Entry>> byAccount = new HashMap<>();
@@ -142,6 +146,10 @@ final class CurrencyJournal {
     }
 
     private static void syncDirectory(Path directory) throws IOException {
+        // Windows 打不开目录通道（拒绝访问），和 Framework 的 DurableStateFile 一样只跳过目录同步，文件内容照常落盘。
+        if (DIRECTORY_SYNC == DurableStateFile.DirectorySync.UNSUPPORTED) {
+            return;
+        }
         try (var channel = FileChannel.open(directory, StandardOpenOption.READ)) {
             channel.force(true /* metaData */);
         }
